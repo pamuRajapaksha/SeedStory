@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { db } from '@/database/database';
 
 export default function AddSeedScreen() {
   const [seedName, setSeedName] = useState('');
@@ -19,14 +20,28 @@ export default function AddSeedScreen() {
   const [description, setDescription] = useState('');
 
   const saveSeed = () => {
-    if (!seedName.trim() || !category.trim() || !duration.trim()) {
-      Alert.alert('Missing Details', 'Please enter Seed Name, Category and Growing Duration.');
-      return;
-    }
+  if (!seedName.trim() || !category.trim() || !duration.trim()) {
+    Alert.alert(
+      'Missing Details',
+      'Please enter Seed Name, Category and Growing Duration.'
+    );
+    return;
+  }
+
+  try {
+    db.runSync(
+      `INSERT INTO seeds (name, category, season, duration, description)
+       VALUES (?, ?, ?, ?, ?)`,
+      seedName.trim(),
+      category.trim(),
+      season.trim(),
+      duration.trim(),
+      description.trim()
+    );
 
     Alert.alert(
       'Success!',
-      `${seedName} has been added successfully!`
+      `${seedName} saved to SeedStory database!`
     );
 
     setSeedName('');
@@ -34,7 +49,12 @@ export default function AddSeedScreen() {
     setSeason('');
     setDuration('');
     setDescription('');
-  };
+
+  } catch (error) {
+    console.error('Error saving seed:', error);
+    Alert.alert('Error', 'Could not save the seed.');
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>

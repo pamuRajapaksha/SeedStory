@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,64 +10,48 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
+import { db } from '@/database/database';
 
-const seeds = [
-  {
-    id: '1',
-    name: 'Tomato',
-    category: 'Vegetable',
-    description: 'Tomato plants need sunlight and regular watering.',
-    duration: '60 - 85 days',
-  },
-  {
-    id: '2',
-    name: 'Carrot',
-    category: 'Root Vegetable',
-    description: 'Carrots grow best in loose and well-drained soil.',
-    duration: '70 - 80 days',
-  },
-  {
-    id: '3',
-    name: 'Green Beans',
-    category: 'Vegetable',
-    description: 'Green beans need sunlight and moderate watering.',
-    duration: '50 - 60 days',
-  },
-  {
-    id: '4',
-    name: 'Cucumber',
-    category: 'Vegetable',
-    description: 'Cucumber plants need plenty of sunlight and water.',
-    duration: '50 - 70 days',
-  },
-  {
-    id: '5',
-    name: 'Chilli',
-    category: 'Vegetable',
-    description: 'Chilli plants grow well in warm and sunny places.',
-    duration: '90 - 120 days',
-  },
-  {
-    id: '6',
-    name: 'Lettuce',
-    category: 'Leafy Vegetable',
-    description: 'Lettuce grows well in cool conditions.',
-    duration: '45 - 60 days',
-  },
-];
+type Seed = {
+  id: number;
+  name: string;
+  category: string;
+  season: string;
+  duration: string;
+  description: string;
+};
 
 export default function SeedLibraryScreen() {
   const [search, setSearch] = useState('');
+  const [seeds, setSeeds] = useState<Seed[]>([]);
 
-  const filteredSeeds = seeds.filter((seed) =>
-    seed.name.toLowerCase().includes(search.toLowerCase()) ||
-    seed.category.toLowerCase().includes(search.toLowerCase())
+  // Load seeds from SQLite whenever this screen opens
+  useFocusEffect(
+    useCallback(() => {
+      try {
+        const savedSeeds = db.getAllSync<Seed>(
+          'SELECT * FROM seeds ORDER BY id DESC'
+        );
+
+        setSeeds(savedSeeds);
+      } catch (error) {
+        console.error('Error loading seeds:', error);
+        Alert.alert('Error', 'Could not load seeds from database.');
+      }
+    }, [])
   );
 
-  const showSeedDetails = (seed: (typeof seeds)[number]) => {
+  const filteredSeeds = seeds.filter(
+    (seed) =>
+      seed.name.toLowerCase().includes(search.toLowerCase()) ||
+      seed.category.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const showSeedDetails = (seed: Seed) => {
     Alert.alert(
       seed.name,
-      `${seed.description}\n\nCategory: ${seed.category}\nGrowing time: ${seed.duration}`
+      `${seed.description}\n\nCategory: ${seed.category}\nPlanting Season: ${seed.season}\nGrowing Time: ${seed.duration}`
     );
   };
 
@@ -96,7 +80,9 @@ export default function SeedLibraryScreen() {
         </Text>
 
         {filteredSeeds.length === 0 ? (
-          <Text style={styles.emptyText}>No seeds found.</Text>
+          <Text style={styles.emptyText}>
+            No seeds found. Please add seeds first.
+          </Text>
         ) : (
           filteredSeeds.map((seed) => (
             <TouchableOpacity
