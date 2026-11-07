@@ -1,180 +1,234 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ExternalLink } from '@/components/external-link';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
+const seeds = [
+  {
+    id: '1',
+    name: 'Tomato',
+    category: 'Vegetable',
+    description: 'Tomato plants need sunlight and regular watering.',
+    duration: '60 - 85 days',
+  },
+  {
+    id: '2',
+    name: 'Carrot',
+    category: 'Root Vegetable',
+    description: 'Carrots grow best in loose and well-drained soil.',
+    duration: '70 - 80 days',
+  },
+  {
+    id: '3',
+    name: 'Green Beans',
+    category: 'Vegetable',
+    description: 'Green beans need sunlight and moderate watering.',
+    duration: '50 - 60 days',
+  },
+  {
+    id: '4',
+    name: 'Cucumber',
+    category: 'Vegetable',
+    description: 'Cucumber plants need plenty of sunlight and water.',
+    duration: '50 - 70 days',
+  },
+  {
+    id: '5',
+    name: 'Chilli',
+    category: 'Vegetable',
+    description: 'Chilli plants grow well in warm and sunny places.',
+    duration: '90 - 120 days',
+  },
+  {
+    id: '6',
+    name: 'Lettuce',
+    category: 'Leafy Vegetable',
+    description: 'Lettuce grows well in cool conditions.',
+    duration: '45 - 60 days',
+  },
+];
+
+export default function SeedLibraryScreen() {
+  const [search, setSearch] = useState('');
+
+  const filteredSeeds = seeds.filter((seed) =>
+    seed.name.toLowerCase().includes(search.toLowerCase()) ||
+    seed.category.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const showSeedDetails = (seed: (typeof seeds)[number]) => {
+    Alert.alert(
+      seed.name,
+      `${seed.description}\n\nCategory: ${seed.category}\nGrowing time: ${seed.duration}`
+    );
   };
-  const theme = useTheme();
-
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Seed Library 🌱</Text>
+          <Text style={styles.subtitle}>
+            Explore seeds and start your garden journey.
+          </Text>
+        </View>
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
-        </ThemedView>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search seeds..."
+            placeholderTextColor="#888"
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
 
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+        <Text style={styles.sectionTitle}>
+          Available Seeds ({filteredSeeds.length})
+        </Text>
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
+        {filteredSeeds.length === 0 ? (
+          <Text style={styles.emptyText}>No seeds found.</Text>
+        ) : (
+          filteredSeeds.map((seed) => (
+            <TouchableOpacity
+              key={seed.id}
+              style={styles.seedCard}
+              onPress={() => showSeedDetails(seed)}
+            >
+              <View style={styles.seedIcon}>
+                <Text style={styles.iconText}>🌱</Text>
+              </View>
 
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+              <View style={styles.seedInfo}>
+                <Text style={styles.seedName}>{seed.name}</Text>
+                <Text style={styles.category}>{seed.category}</Text>
+                <Text style={styles.duration}>
+                  Growing time: {seed.duration}
+                </Text>
+              </View>
 
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+              <Text style={styles.arrow}>›</Text>
+            </TouchableOpacity>
+          ))
+        )}
 
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Every seed has a story. Start growing yours! 🌿
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
   container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
+    flex: 1,
+    backgroundColor: '#F4F8F1',
   },
-  titleContainer: {
-    gap: Spacing.three,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+  header: {
+    padding: 22,
+    paddingTop: 25,
   },
-  centerText: {
-    textAlign: 'center',
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#245C35',
   },
-  pressed: {
-    opacity: 0.7,
+  subtitle: {
+    fontSize: 14,
+    color: '#68776B',
+    marginTop: 8,
   },
-  linkButton: {
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  searchInput: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#DCE8D9',
+  },
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: '#245C35',
+    marginHorizontal: 20,
+    marginBottom: 12,
+  },
+  seedCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 15,
+    borderRadius: 14,
     flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
+    alignItems: 'center',
+    elevation: 2,
+  },
+  seedIcon: {
+    width: 50,
+    height: 50,
+    backgroundColor: '#E8F4E7',
+    borderRadius: 12,
     justifyContent: 'center',
-    gap: Spacing.one,
     alignItems: 'center',
   },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
+  iconText: {
+    fontSize: 27,
   },
-  collapsibleContent: {
+  seedInfo: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  seedName: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#245C35',
+  },
+  category: {
+    fontSize: 13,
+    color: '#777777',
+    marginTop: 3,
+  },
+  duration: {
+    fontSize: 12,
+    color: '#4C8756',
+    marginTop: 5,
+  },
+  arrow: {
+    fontSize: 27,
+    color: '#4C8756',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#777777',
+    marginTop: 30,
+    fontSize: 15,
+  },
+  footer: {
+    margin: 20,
+    padding: 18,
+    backgroundColor: '#E5F1E2',
+    borderRadius: 12,
     alignItems: 'center',
   },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
+  footerText: {
+    color: '#356B43',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
